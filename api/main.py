@@ -41,6 +41,20 @@ def _make_fake_result(config: AttackConfig) -> RunResult:
     )
 
 
+def parse_ran_post_json(run_json: dict) -> AttackConfig:
+    """
+    Parse json and convert it into an AttackConfig model
+
+    Args:
+        run_json (dict): A json string retrieved through API representing an AttackConfig model structure
+
+    Returns:
+        AttackConfig: A converted version of the json into an AttackConfig model
+    """
+    cleaned_json = {k: v for k, v in run_json.items() if v}
+    return AttackConfig(**cleaned_json)
+
+
 @app.get("/health")
 def health():
     return {"status": "ok", "version": VERSION}
