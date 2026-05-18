@@ -1,3 +1,10 @@
+"""
+Configures data poisoning and adversarial attack configurations and runs.
+
+This module provides Pydantic models to define adversarial machine learning
+attacks, track model performance metrics, and log benchmark run execution data.
+"""
+
 from pydantic import BaseModel, Field
 from typing import Literal
 from datetime import datetime

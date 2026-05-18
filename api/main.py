@@ -1,3 +1,11 @@
+"""
+Uses fastAPI to interact with the tool
+
+Currently has a nice set of start APIs, like health to see
+availability, runs to get a list of runs, create a run, or
+see a specific run's details.
+"""
+
 from fastapi import FastAPI, HTTPException
 from core.models import AttackConfig, RunResult, MetricSnapshot
 from datetime import datetime
