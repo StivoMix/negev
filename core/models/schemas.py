@@ -5,7 +5,7 @@ This module provides Pydantic models to define adversarial machine learning
 attacks, track model performance metrics, and log benchmark run execution data.
 """
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, computed_field
 from typing import Literal
 from datetime import datetime
 import uuid
@@ -86,6 +86,7 @@ class RunResult(BaseModel):
     created_at: datetime = Field(default_factory=datetime.now)
     duration_seconds: float | None = None
 
+    @computed_field
     @property
     def degradation(self) -> float | None:
         """
