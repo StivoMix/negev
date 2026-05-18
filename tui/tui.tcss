@@ -1,0 +1,34 @@
+Screen
+{
+    background: $surface;
+}
+
+#table-title
+{
+    color: $accent;
+    text-align: center;
+    padding: 1;
+}
+
+.sidebar
+{
+    width: 20%;
+}
+
+.main-pane
+{
+    width: 80%;
+}
+
+#controls
+{
+    height: auto;
+    padding: 1;
+    border: solid $accent;
+    margin: 1;
+}
+
+Button
+{
+    margin: 0 1;
+}
