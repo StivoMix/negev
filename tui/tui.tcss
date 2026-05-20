@@ -1,34 +1,40 @@
-Screen
-{
+Screen {
     background: $surface;
 }
 
-#table-title
-{
+#body {
+    height: 1fr;
+}
+
+.section-title {
     color: $accent;
-    text-align: center;
+    text-style: bold;
+    padding: 1 1 0 1;
+}
+
+.status {
+    color: $text-muted;
+    padding: 0 1 1 1;
+}
+
+.sidebar {
+    width: 28;
+    background: $boost;
+    border-right: solid $accent;
     padding: 1;
 }
 
-.sidebar
-{
-    width: 20%;
+.main-pane {
+    width: 1fr;
+    padding: 1 2;
 }
 
-.main-pane
-{
-    width: 80%;
+Button {
+    width: 100%;
+    margin: 0 0 1 0;
 }
 
-#controls
-{
-    height: auto;
-    padding: 1;
-    border: solid $accent;
-    margin: 1;
-}
-
-Button
-{
-    margin: 0 1;
+DataTable {
+    height: 1fr;
+    margin-top: 1;
 }
