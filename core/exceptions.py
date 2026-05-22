@@ -21,6 +21,6 @@ class PoisonRateOutOfRange(NegevBaseError):
     def __init__(self, poison_rate: float):
         self.poison_rate = poison_rate
         self.message = (
-            f"Poison rate must be in [0.0, 1.0]. Recieved {poison_rate}."
+            f"Poison rate must be in [0.0, 1.0]. Received {poison_rate}."
         )
         super().__init__(self.message)

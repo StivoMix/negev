@@ -35,7 +35,7 @@ def _make_fake_result(config: AttackConfig) -> RunResult:
         post_attack_metrics=MetricSnapshot(
             accuracy=0.91 - (config.poison_rate * 0.6),
             perplexity=12.3 + (config.poison_rate * 20),
-            attack_success_rate=config.poison_rate * 0.8,
+            attack_success_rate=None
         ),
         duration_seconds=42.7,
     )

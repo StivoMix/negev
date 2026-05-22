@@ -140,7 +140,7 @@ def capture_metrics(
         perplexity = _get_perplexity(model, dataset, text_column, device)
     except Exception as e:
         print(f"\nPerplexity calculation failed with error: {e}\n")
-        perplexity = 0.0 # temporary fix because function would fail on non causal LMs.
+        perplexity = None # temporary fix because function would fail on non causal LMs or version mismatching causal LMs.
 
     return MetricSnapshot(
         accuracy=accuracy,

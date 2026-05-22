@@ -1,1 +1,1 @@
-from.metrics import capture_metrics
+from .metrics import capture_metrics

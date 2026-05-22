@@ -49,7 +49,7 @@ class MetricSnapshot(BaseModel):
         attack_success_rate (float): Measurement of how much impact the attack had on the model at the given point in time
     """
     accuracy: float
-    perplexity: float
+    perplexity: float | None = None
     attack_success_rate: float | None = None
 
 

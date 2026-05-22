@@ -70,7 +70,7 @@ class RunsTable(Static):
             runs = httpx.get(f"{API_BASE}/runs").json()
             for run in runs:
                 table.add_row(*self.craft_row(run))
-        except Exception as e:
+        except httpx.RequestError as e:
             table.add_row("ERROR", str(e), "", "", "", "", "", "")
 
 
