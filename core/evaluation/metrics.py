@@ -28,6 +28,10 @@ def _get_predictions(
     Returns:
         list[int]: A list containing raw numerical representation of the model's predictions.
     """
+    max_length = tokenizer.model_max_length
+    if max_length > 1e6: # safety check for tokenizers without max length configured
+        max_length = 512
+
     classifier = pipeline(
         "text-classification",
         model=model,
