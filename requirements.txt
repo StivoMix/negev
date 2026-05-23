@@ -5,3 +5,7 @@ uvicorn
 httpx
 typer
 pydantic
+transformers
+accelerate
+datasets
+evaluate
