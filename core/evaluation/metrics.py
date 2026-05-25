@@ -38,7 +38,7 @@ def _get_predictions(
         tokenizer=tokenizer,
         device=device,
         truncation=True,
-        max_length=512
+        max_length=max_length
     )
 
     results = classifier(list(dataset[text_column]))
