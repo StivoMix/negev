@@ -9,3 +9,5 @@ transformers
 accelerate
 datasets
 evaluate
+cleanlab
+numpy
