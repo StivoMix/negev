@@ -90,7 +90,7 @@ class RunResult(BaseModel):
     @property
     def degradation(self) -> float | None:
         """
-        Function calculates accuracy dropped post attack
+        Method calculates accuracy dropped post attack
 
         Returns:
             float: Accuracy dropped post attack
@@ -99,3 +99,33 @@ class RunResult(BaseModel):
             return self.baseline_metrics.accuracy - self.post_attack_metrics.accuracy
         
         return None
+    
+
+class FilterReport(BaseModel):
+    """
+    A post defense report holding data on suspicious rows in a dataset.
+
+    Attributes:
+        total_rows (int): Total rows scanned in a dataset.
+        rows_flagged (int): Total rows that were flagged as suspicious in a dataset.
+        method (str): Method used to filter for suspicious rows.
+    """
+    total_rows: int
+    rows_flagged: int
+    method: Literal[
+        "label_noise_filter",
+        "isolation_forest",
+        "lof",
+        "embedding_cluster"
+    ] # more will be added in the future, this is a placeholder for now
+
+    @computed_field
+    @property
+    def rows_remaining(self) -> int:
+        """
+        Calculates remaining, non flagged rows in a dataset after a scan.
+
+        Returns:
+            int: Non flagged rows in a dataset post scan.
+        """
+        return self.total_rows - self.rows_flagged

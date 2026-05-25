@@ -1,1 +1,1 @@
-from .schemas import AttackConfig, MetricSnapshot, RunResult
+from .schemas import AttackConfig, MetricSnapshot, RunResult, FilterReport
