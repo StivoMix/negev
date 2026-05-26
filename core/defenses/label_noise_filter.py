@@ -1,8 +1,10 @@
 from datasets import Dataset
-from transformers import PreTrainedModel, PreTrainedTokenizerBase, pipeline
+from transformers import PreTrainedModel, PreTrainedTokenizerBase
 from cleanlab.filter import find_label_issues
 from core.models import FilterReport
 import numpy as np
+import torch as tr
+import torch.nn.functional as tr_functional
 
 _METHOD_NAME = "label_noise_filter"
 
@@ -39,23 +41,22 @@ def label_noise_filter_apply(
     if max_length > 1e6:
         max_length = 512
 
-    classifier = pipeline(
-        "text-classification",
-        model=model,
-        tokenizer=tokenizer,
-        device=device,
-        truncation=True,
-        max_length=max_length,
-        top_k=None
-    )
+    model.eval()
+    all_probabilities = []
 
-    results = classifier(list(dataset[text_column]))
-    label2id = model.config.label2id
+    with tr.no_grad():
+        for row in dataset[text_column]:
+            inputs = tokenizer(
+                row,
+                return_tensors="pt",
+                truncation=True,
+                max_length=max_length
+            ).to(device)
+            logits = model(**inputs).logits
+            probs = tr_functional.softmax(logits, dim=-1)[0]
+            all_probabilities.append(probs.cpu().numpy())
 
-    predictions_probabilities = np.array([
-        [score_dict["score"] for score_dict in sorted(row, key=lambda d: label2id[d["label"]])] for row in results
-    ])
-
+    predictions_probabilities = np.array(all_probabilities)
     dataset_labels = np.array(dataset[target_column])
 
     suspicious_mask = find_label_issues(
