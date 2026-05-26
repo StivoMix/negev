@@ -45,7 +45,8 @@ def label_noise_filter_apply(
         tokenizer=tokenizer,
         device=device,
         truncation=True,
-        max_length=max_length
+        max_length=max_length,
+        top_k=None
     )
 
     results = classifier(list(dataset[text_column]))
