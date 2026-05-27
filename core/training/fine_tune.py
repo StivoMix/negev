@@ -5,7 +5,8 @@ from typing import Any
 def fine_tune(
     model: PreTrainedModel,
     tokenizer: PreTrainedTokenizerBase,
-    dataset: Dataset,
+    train_ds: Dataset,
+    eval_ds: Dataset,
     text_column: str,
     target_column: str,
     seed: int = 0,
@@ -27,7 +28,8 @@ def fine_tune(
     Args:
         model (PreTrainedModel): A pre trained model to be trained on the new dataset.
         tokenizer (PreTrainedTokenizerBase): Tokenizer to be used accordingly for the pretrained model.
-        dataset (Dataset): A dataset for the model to train on.
+        train_ds (Dataset): Training split of a dataset for the model to train on.
+        eval_ds (Datset): Testing split of a dataset for the model to be tested on.
         text_column (str): The column containing the text for the model to understand.
         target_column (str): The column containing the true answers to a certain text.
         seed (int, optional): The reproducibility seed to use for training. Defaults to 0.
@@ -59,12 +61,15 @@ def fine_tune(
 
         return tokenizer(batch[text_column], truncation=True, max_length=max_length)
     
-    ds = dataset.map(_tokenize, batched=True).rename_column(target_column, "labels")
-    
-    relevant_columns = ["input_ids", "attention_mask", "labels"]
-    ds = ds.remove_columns([column for column in ds.column_names if column not in relevant_columns])
 
-    split = ds.train_test_split(test_size=test_size, seed=seed)
+    def _prepare_dataset(dataset: Dataset) -> Dataset:
+        prepared = dataset.map(_tokenize, batched=True).rename_column(target_column, "labels")
+        relevant_columns = ["input_ids", "attention_mask", "labels"]
+        return prepared.remove_columns([column for column in prepared.column_names if column not in relevant_columns])
+
+    
+    train_ds = _prepare_dataset(train_ds)
+    eval_ds = _prepare_dataset(eval_ds)
 
     training_args = TrainingArguments(
         output_dir=output_dir,
@@ -79,8 +84,8 @@ def fine_tune(
     trainer = Trainer(
         model=model,
         args=training_args,
-        train_dataset=split["train"],
-        eval_dataset=split["test"],
+        train_dataset=train_ds,
+        eval_dataset=eval_ds,
         processing_class=tokenizer,
         data_collator=DataCollatorWithPadding(tokenizer)
     )
