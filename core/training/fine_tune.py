@@ -10,7 +10,6 @@ def fine_tune(
     text_column: str,
     target_column: str,
     seed: int = 0,
-    test_size: float = 0.1,
     epochs: int = 1,
     learning_rate: float = 2e-5,
     output_dir: str = "./training_output",
@@ -33,7 +32,6 @@ def fine_tune(
         text_column (str): The column containing the text for the model to understand.
         target_column (str): The column containing the true answers to a certain text.
         seed (int, optional): The reproducibility seed to use for training. Defaults to 0.
-        test_size (float, optional): Percentage of the dataset batch to be selected for model evaluation. Defaults to 0.1.
         epochs (int, optional): Amount of dataset training loops for the model to go through. Defaults to 1.
         learning_rate (float, optional): A factor for scaling model self correction upon mistake. Defaults to 2e-5.
         output_dir (str, optional): Directory into which the resulting tuned model weights are saved to. Defaults to "./training_output".
