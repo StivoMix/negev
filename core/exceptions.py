@@ -24,3 +24,13 @@ class PoisonRateOutOfRange(NegevBaseError):
             f"Poison rate must be in [0.0, 1.0]. Received {poison_rate}."
         )
         super().__init__(self.message)
+
+
+class NotImplementedError(NegevBaseError):
+    """Raised when a certain unimplemented action is called."""
+    def __init__(self, action: str):
+        self.action = action
+        self.message = (
+            f"Action {action} not yet implemented"
+        )
+        super().__init__(self.message)
