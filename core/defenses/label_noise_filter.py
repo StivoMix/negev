@@ -41,6 +41,7 @@ def label_noise_filter_apply(
     if max_length > 1e6:
         max_length = 512
 
+    model = model.to(device)
     model.eval()
     all_probabilities = []
 
@@ -51,7 +52,7 @@ def label_noise_filter_apply(
                 return_tensors="pt",
                 truncation=True,
                 max_length=max_length
-            ).to(device)
+            ).to(model.device)
             logits = model(**inputs).logits
             probs = tr_functional.softmax(logits, dim=-1)[0]
             all_probabilities.append(probs.cpu().numpy())
