@@ -1,6 +1,6 @@
 # Negev
 
-A modular benchmarking framework for **LLM data poisoning attacks and defenses**, focused on OWASP LLM03 (Training Data Poisoning).
+A modular benchmarking framework for **LLM data poisoning attacks and defenses**, focused on OWASP LLM04 (Data and Model Poisoning).
 
 > **Early stage project.** This is an active work in progress, not production ready software. The architecture and core pipeline work end to end, but many planned attacks, defenses, and features are not yet implemented. Expect rough edges.
 
