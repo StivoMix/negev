@@ -1,5 +1,10 @@
+# IDE and python generated files
 __pycache__/
 *.pyc
-.env
 .vscode
+
+# Tool generated files
 training_output/
+
+# Files containing sensitive data
+.env
