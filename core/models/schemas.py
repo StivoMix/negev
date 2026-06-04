@@ -28,6 +28,9 @@ class AttackConfig(BaseModel):
         epochs (int): How many times should a model iterate over a datset. Defaults to 3.
         samples (int | None): How many rows to use in model fine tuning. Defaults to None.
         device (str): Which device to use for model fine tuning and computing. Defaults to "cpu".
+        test_size (float): Test size to use for model fine tuning. Defaults to 0.1.
+        learning_rate (float): A factor for scaling model self correction upon mistake. Defaults to 2e-5.
+        output_dir (str): Directory into which the resulting tuned model weights are saved to. Defaults to "./training_output".
     """
     attack_type: Literal[
         "label_flip",
@@ -52,8 +55,11 @@ class AttackConfig(BaseModel):
     ] = "none"
     seed: int = 0
     epochs: int = 3
-    samples: int | None = None      # None = use full dataset
+    samples: int | None = None # None = use full dataset
     device: str = "cpu"
+    test_size: float = 0.1
+    learning_rate: float = 2e-5
+    output_dir: str = "./training_output"
 
 
 
