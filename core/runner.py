@@ -3,8 +3,8 @@ from transformers import PreTrainedModel, PreTrainedTokenizerBase, AutoTokenizer
 from datasets import Dataset, load_dataset
 from core.training import fine_tune
 from core.evaluation import capture_metrics
-from core.attacks import LabelFlipAttack, Attack
-from core.defenses import label_noise_filter_apply
+from core.attacks import LabelFlipAttack, Attack, ATTACK_REGISTRY
+from core.defenses import label_noise_filter_apply, DEFENSE_REGISTRY
 from time import perf_counter
 
 def _load_model(model_id: str) -> PreTrainedModel:
@@ -60,15 +60,15 @@ def _build_attack(config: AttackConfig) -> Attack:
     Returns:
         Attack: An attack instance to be executed.
     """
-    match config.attack_type:
-        case "label_flip":
-            return LabelFlipAttack(
-                poison_rate=config.poison_rate,
-                target_column=config.target_column,
-                seed=config.seed
-            )
-        case _:
-            raise NotImplementedError(f"Action {config.attack_type} not yet implemented")
+    attack_class: type[Attack] = ATTACK_REGISTRY.get(config.attack_type)
+    if attack_class is None:
+        raise NotImplementedError(f"Action {config.attack_type} not yet implemented")
+    
+    return attack_class(
+        poison_rate=config.poison_rate,
+        target_column=config.target_column,
+        seed=config.seed
+    )
 
 def _build_defense(config: AttackConfig):
     """
@@ -81,15 +81,13 @@ def _build_defense(config: AttackConfig):
         NotImplementedError: Raised when the defense is not implemented.
 
     Returns:
-        Attack: A defense instance to be executed.
+        Function: A defense instance to be executed.
     """
-    match config.defense_type:
-        case "none":
-            return None
-        case "label_noise_filter":
-            return label_noise_filter_apply # returning the function signature for now till remade into a class
-        case _:
-            raise NotImplementedError(f"Action {config.defense_type} not yet implemented")
+    defense_func = DEFENSE_REGISTRY.get(config.defense_type)
+    if defense_func is None:
+        raise NotImplementedError(f"Action {config.defense_type} not yet implemented")
+
+    return defense_func
 
 def _train_and_measure(
     model: PreTrainedModel,

@@ -9,6 +9,7 @@ see a specific run's details.
 from fastapi import FastAPI, HTTPException
 from core.models import AttackConfig, RunResult
 from core.runner import execute
+from core.capabilities import get_capabilities
 
 TITLE = "Negev"
 VERSION = "0.1.0"
@@ -63,3 +64,11 @@ def get_run(run_id: str) -> RunResult:
     if run_id not in _runs:
         raise HTTPException(status_code=404, detail="Run not found")
     return _runs[run_id]
+
+
+@app.get("/capabilities")
+def capabilities() -> dict:
+    """
+    Calls the get_capabilities function in a get request.
+    """
+    return get_capabilities()
