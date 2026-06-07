@@ -7,8 +7,8 @@ see a specific run's details.
 """
 
 from fastapi import FastAPI, HTTPException
-from core.models import AttackConfig, RunResult, MetricSnapshot
-from datetime import datetime
+from core.models import AttackConfig, RunResult
+from core.runner import execute
 
 TITLE = "Negev"
 VERSION = "0.1.0"
@@ -16,30 +16,6 @@ VERSION = "0.1.0"
 app = FastAPI(title=TITLE, version=VERSION)
 
 _runs: dict[str, RunResult] = {} # storing this in memory for now. will use DBs later
-
-
-def _make_fake_result(config: AttackConfig) -> RunResult:
-    """
-    Creates a fake result so i could debug stuff with it and test UI later. (AI generated function)
-
-    Args:
-        config (AttackConfig): Configuration of the attack
-
-    Returns:
-        RunResult: Result of the attack
-    """
-    return RunResult(
-        config=config,
-        status="complete",
-        baseline_metrics=MetricSnapshot(accuracy=0.91, perplexity=12.3),
-        post_attack_metrics=MetricSnapshot(
-            accuracy=0.91 - (config.poison_rate * 0.6),
-            perplexity=12.3 + (config.poison_rate * 20),
-            attack_success_rate=None
-        ),
-        duration_seconds=42.7,
-    )
-
 
 @app.get("/health")
 def health():
@@ -68,7 +44,7 @@ def create_run(config: AttackConfig) -> RunResult:
     Returns:
         RunResult: A result instance
     """
-    result = _make_fake_result(config)
+    result = execute(config)
     _runs[result.run_id] = result
     return result
 
