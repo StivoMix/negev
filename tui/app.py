@@ -3,6 +3,8 @@ from textual.widgets import Header, Footer, DataTable, Button, Static, Label
 from textual.containers import Horizontal, Vertical
 import httpx
 
+from create_attack import CreateAttackScreen
+
 API_BASE = "http://localhost:8000"
 
 
@@ -91,7 +93,7 @@ class NegevApp(App):
                 yield Label("Controls", classes="section-title")
                 yield Button("Health Check", id="get_health", variant="primary")
                 yield Label("status: —", id="health_label", classes="status")
-                yield Button("New Run", id="new_run", variant="success")
+                yield Button("Create Attack", id="create_attack", variant="success")
             with Vertical(classes="main-pane"):
                 yield RunsTable()
         yield Footer()
@@ -108,17 +110,29 @@ class NegevApp(App):
                 response = self.get_response("health")
                 label.update(f"status: {response}")
 
-            case "new_run":
-                httpx.post(
-                    f"{API_BASE}/runs",
-                    json={
-                        "attack_type": "label_flip",
-                        "target_model": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
-                        "dataset_name": "imdb",
-                        "poison_rate": 0.1,
-                    },
-                ).json()
-                self.action_refresh()
+            case "create_attack":
+                self.open_create_attack()
+
+    def open_create_attack(self) -> None:
+        """Open the Create Attack modal, populating dropdowns from /capabilities."""
+        try:
+            caps = self.get_response("capabilities")
+            attacks = caps.get("attacks", [])
+            defenses = caps.get("defenses", [])
+        except Exception:
+            attacks, defenses = [], []
+        self.push_screen(
+            CreateAttackScreen(attacks, defenses), self.on_attack_submitted
+        )
+
+    def on_attack_submitted(self, config: dict | None) -> None:
+        """Callback for the Create Attack modal.
+
+        `config` is the collected form values, or None if cancelled.
+        TODO: send `config` to the API to create the attack, then refresh.
+        """
+        if config is not None:
+            self.action_refresh()
 
     def get_response(self, param: str):
         return httpx.get(f"{API_BASE}/{param}").json()

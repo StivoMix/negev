@@ -38,3 +38,99 @@ DataTable {
     height: 1fr;
     margin-top: 1;
 }
+
+CreateAttackScreen {
+    align: center middle;
+}
+
+#create-attack-dialog {
+    width: 72;
+    height: 90%;
+    max-height: 44;
+    background: $surface;
+    border: thick $accent;
+    padding: 1 2;
+}
+
+#create-attack-title {
+    width: 100%;
+    text-align: center;
+    text-style: bold;
+    color: $accent;
+    padding-bottom: 1;
+}
+
+#create-attack-form {
+    height: 1fr;
+}
+
+#create-attack-form Label {
+    padding: 1 0 0 0;
+    color: $text-muted;
+}
+
+#create-attack-form Input,
+#create-attack-form Select {
+    width: 100%;
+}
+
+Slider {
+    height: 1;
+    width: 1fr;
+    margin: 1 0 0 0;
+}
+
+Slider:focus {
+    background: $boost;
+}
+
+#create-attack-buttons {
+    height: auto;
+    align: right middle;
+    padding-top: 1;
+}
+
+#create-attack-buttons Button {
+    width: auto;
+    margin: 0 0 0 2;
+}
+
+/* --- Missing-field error popup --- */
+
+ErrorDialog {
+    align: center middle;
+}
+
+#error-dialog {
+    width: 56;
+    height: auto;
+    max-height: 80%;
+    background: $surface;
+    border: thick $error;
+    padding: 1 2;
+}
+
+#error-title {
+    width: 100%;
+    text-align: center;
+    text-style: bold;
+    color: $error;
+    padding-bottom: 1;
+}
+
+#error-subtitle {
+    width: 100%;
+    color: $text-muted;
+    padding-bottom: 1;
+}
+
+#error-list {
+    width: 100%;
+    color: $text;
+    padding-bottom: 1;
+}
+
+#error-ok {
+    width: auto;
+    margin: 1 0 0 0;
+}
