@@ -126,13 +126,19 @@ class NegevApp(App):
         )
 
     def on_attack_submitted(self, config: dict | None) -> None:
-        """Callback for the Create Attack modal.
+        """Callback for the Create Attack modal"""
+        if config is None:
+            return
+    
+        try:
+            resp = httpx.post(f"{API_BASE}/runs", json=config)
+            resp.raise_for_status()
+        except httpx.HTTPStatusError as e:
+            self.notify(f"Config Error: {e.response.json()}", severity="error")
+        except httpx.RequestError as e:
+            self.notify(f"Network Error: {e}", severity="error")
 
-        `config` is the collected form values, or None if cancelled.
-        TODO: send `config` to the API to create the attack, then refresh.
-        """
-        if config is not None:
-            self.action_refresh()
+        self.action_refresh()
 
     def get_response(self, param: str):
         return httpx.get(f"{API_BASE}/{param}").json()
