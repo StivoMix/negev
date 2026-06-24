@@ -72,3 +72,8 @@ def capabilities() -> dict:
     Calls the get_capabilities function in a get request.
     """
     return get_capabilities()
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="127.0.0.1", port=8000)

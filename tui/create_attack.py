@@ -176,11 +176,11 @@ class CreateAttackScreen(ModalScreen[dict | None]):
                 yield Label("Samples (blank = full dataset)")
                 yield Input(value=None, id="samples", type="integer")
 
-                yield Label("Defense type")
+                yield Label("Defense type *")
                 yield Select(
                     [(d, d) for d in self.defenses],
                     id="defense_type",
-                    prompt="none",
+                    prompt="Select defense"
                 )
 
                 with Collapsible(title="Advanced", id="advanced"):
@@ -245,6 +245,7 @@ class CreateAttackScreen(ModalScreen[dict | None]):
         "dataset_name": "Dataset name",
         "text_column": "Text column",
         "target_column": "Target column",
+        "defense_type": "Defense type"
     }
 
     def _missing_required(self) -> list[str]:
