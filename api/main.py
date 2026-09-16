@@ -6,7 +6,7 @@ availability, runs to get a list of runs, create a run, or
 see a specific run's details.
 """
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, BackgroundTasks
 from core.models import AttackConfig, RunResult
 from core.runner import execute
 from core.capabilities import get_capabilities
@@ -17,6 +17,12 @@ VERSION = "0.1.0"
 app = FastAPI(title=TITLE, version=VERSION)
 
 _runs: dict[str, RunResult] = {} # storing this in memory for now. will use DBs later
+
+
+def _run_in_background(run_id: str, config: AttackConfig) -> None:
+    result = execute(config)
+    _runs[run_id] = result # overwrites entry with the finished result
+
 
 @app.get("/health")
 def health():
@@ -35,7 +41,7 @@ def list_runs() -> list[RunResult]:
 
 
 @app.post("/runs", status_code=201)
-def create_run(config: AttackConfig) -> RunResult:
+def create_run(config: AttackConfig, background_tasks: BackgroundTasks) -> RunResult:
     """
     Sends a post request to /runs in order to create a new run
 
@@ -45,9 +51,12 @@ def create_run(config: AttackConfig) -> RunResult:
     Returns:
         RunResult: A result instance
     """
-    result = execute(config)
-    _runs[result.run_id] = result
-    return result
+    pending = RunResult(config=config, status="running")
+    _runs[pending.run_id] = pending
+
+    background_tasks.add_task(_run_in_background, pending.run_id, config)
+
+    return pending
 
 
 @app.get("/runs/{run_id}")
