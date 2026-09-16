@@ -1,6 +1,7 @@
 from textual.app import App, ComposeResult, on
 from textual.widgets import Header, Footer, DataTable, Button, Static, Label
 from textual.containers import Horizontal, Vertical
+from textual import work
 import httpx
 
 from create_attack import CreateAttackScreen
@@ -32,6 +33,7 @@ class RunsTable(Static):
         table.zebra_stripes = True
         table.add_columns(*self.COLUMNS)
         self.refresh_runs()
+        self.set_interval(5, self.refresh_runs)
 
     def craft_row(self, run: dict) -> list:
         """
@@ -58,7 +60,8 @@ class RunsTable(Static):
             run["status"],
         ]
 
-    def refresh_runs(self) -> None:
+    @work(exclusive=True)
+    async def refresh_runs(self) -> None:
         """
         Refreshes the runs table
 
@@ -67,12 +70,17 @@ class RunsTable(Static):
         function and then adds each row to the table.
         """
         table = self.query_one(DataTable)
-        table.clear()
         try:
-            runs = httpx.get(f"{API_BASE}/runs").json()
+            async with httpx.AsyncClient() as client:
+                response = await client.get(f"{API_BASE}/runs")
+                runs = response.json()
+
+            table.clear()
             for run in runs:
                 table.add_row(*self.craft_row(run))
+
         except httpx.RequestError as e:
+            table.clear()
             table.add_row("ERROR", str(e), "", "", "", "", "", "")
 
 
