@@ -116,7 +116,8 @@ class NegevApp(App):
     ]
 
 
-    def on_mount(self) -> None:
+    def __init__(self) -> None:
+        super().__init__()
         self.client = NegevClient(API_BASE)
 
     
