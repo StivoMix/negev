@@ -9,6 +9,30 @@ from create_attack import CreateAttackScreen
 API_BASE = "http://localhost:8000"
 
 
+class NegevClient:
+    """Centralized async HTTP client for talking with the Negev API."""
+
+    def __init__(self, base_url: str) -> None:
+        self.base_url = base_url
+        self._client = httpx.AsyncClient(base_url=base_url)
+
+
+    async def get(self, path: str) -> dict:
+        response = await self._client.get(path)
+        response.raise_for_status()
+        return response.json()
+
+
+    async def post(self, path: str, json: dict) -> dict:
+        response = await self._client.post(path, json=json)
+        response.raise_for_status()
+        return response.json()
+
+
+    async def aclose(self) -> None:
+        await self._client.aclose()
+
+
 class RunsTable(Static):
     """Widget that displays a DataTable containing data on all runs."""
 
@@ -71,15 +95,12 @@ class RunsTable(Static):
         """
         table = self.query_one(DataTable)
         try:
-            async with httpx.AsyncClient() as client:
-                response = await client.get(f"{API_BASE}/runs")
-                runs = response.json()
-
+            runs = await self.app.client.get("/runs")
             table.clear()
             for run in runs:
                 table.add_row(*self.craft_row(run))
 
-        except httpx.RequestError as e:
+        except httpx.HTTPError as e:
             table.clear()
             table.add_row("ERROR", str(e), "", "", "", "", "", "")
 
@@ -94,6 +115,15 @@ class NegevApp(App):
         ("r", "refresh", "Refresh"),
     ]
 
+
+    def on_mount(self) -> None:
+        self.client = NegevClient(API_BASE)
+
+    
+    async def on_unmount(self) -> None:
+        await self.client.aclose()
+
+
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
         with Horizontal(id="body"):
@@ -106,50 +136,56 @@ class NegevApp(App):
                 yield RunsTable()
         yield Footer()
 
-    @on(Button.Pressed)
-    def handle_button(self, event: Button.Pressed) -> None:
-        self.process_button_function(event.button.id)
 
-    def process_button_function(self, button_id: str) -> None:
-        match button_id:
-            case "get_health":
-                label = self.query_one("#health_label", Label)
-                label.update("status: requesting...")
-                response = self.get_response("health")
-                label.update(f"status: {response}")
+    @on(Button.Pressed, "#get_health")
+    def _health_pressed(self) -> None:
+        self.run_health_check()
 
-            case "create_attack":
-                self.open_create_attack()
 
-    def open_create_attack(self) -> None:
+    @on(Button.Pressed, "#create_attack")
+    def _create_attack_pressed(self) -> None:
+        self.open_create_attack()
+
+
+    @work(exclusive=True)
+    async def run_health_check(self) -> None:
+        label = self.query_one("#health_label", Label)
+        label.update("status: requesting...")
+        try:
+            response = await self.client.get("/health")
+            label.update(f"status: {response}")
+        except httpx.HTTPError as e:
+            label.update(f"status: error ({e})")
+
+
+    @work(exclusive=True)
+    async def open_create_attack(self) -> None:
         """Open the Create Attack modal, populating dropdowns from /capabilities."""
         try:
-            caps = self.get_response("capabilities")
+            caps = await self.client.get("/capabilities")
             attacks = caps.get("attacks", [])
             defenses = caps.get("defenses", [])
-        except Exception:
+        except httpx.HTTPError:
             attacks, defenses = [], []
-        self.push_screen(
-            CreateAttackScreen(attacks, defenses), self.on_attack_submitted
-        )
+        config = await self.push_screen_wait(CreateAttackScreen(attacks, defenses))
+        await self.on_attack_submitted(config)
 
-    def on_attack_submitted(self, config: dict | None) -> None:
+
+    async def on_attack_submitted(self, config: dict | None) -> None:
         """Callback for the Create Attack modal"""
         if config is None:
             return
     
         try:
-            resp = httpx.post(f"{API_BASE}/runs", json=config)
-            resp.raise_for_status()
+            await self.client.post("/runs", json=config)
         except httpx.HTTPStatusError as e:
             self.notify(f"Config Error: {e.response.json()}", severity="error")
+            return
         except httpx.RequestError as e:
             self.notify(f"Network Error: {e}", severity="error")
-
+            return
+        
         self.action_refresh()
-
-    def get_response(self, param: str):
-        return httpx.get(f"{API_BASE}/{param}").json()
 
     def action_refresh(self) -> None:
         self.query_one(RunsTable).refresh_runs()
