@@ -178,7 +178,8 @@ class NegevApp(App):
             return
     
         try:
-            await self.client.post("/runs", json=config)
+            result = await self.client.post("/runs", json=config)
+            self.notify(f"Run {result['run_id']} started", severity="information")
         except httpx.HTTPStatusError as e:
             self.notify(f"Config Error: {e.response.json()}", severity="error")
             return
