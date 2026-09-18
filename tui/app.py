@@ -47,6 +47,12 @@ class RunsTable(Static):
         "Status",
     )
 
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._notified_failures: set[str] = set()
+
+
     def compose(self) -> ComposeResult:
         yield Label("Runs", classes="section-title")
         yield DataTable(id="runs-table")
@@ -99,10 +105,12 @@ class RunsTable(Static):
             table.clear()
             for run in runs:
                 table.add_row(*self.craft_row(run))
+                if run['status'] == "failed" and run['run_id'] not in self._notified_failures:
+                    self._notified_failures.add(run['run_id'])
+                    self.notify(f"Run {run['run_id']} failed: {run.get('error_message', 'unknown error')}", severity="error", timeout=5)
 
         except httpx.HTTPError as e:
-            table.clear()
-            table.add_row("ERROR", str(e), "", "", "", "", "", "")
+            self.notify(f"Error connecting to server: {e}", severity="error")
 
 
 class NegevApp(App):
