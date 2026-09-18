@@ -61,15 +61,15 @@ The **terminal UI is the exception**: frontend/design isn't where my learning fo
 
 ## Roadmap (rough)
 
-More attacks: targeted label flip, backdoor triggers, LoRA weight poisoning, feature collision
-More defenses: embedding based outlier detection (`pyod`)
-The full pipeline view (attacks x defenses)
-Containerization for self hosted deployment
+- More attacks: targeted label flip, backdoor triggers, LoRA weight poisoning, feature collision
+- More defenses: embedding based outlier detection (`pyod`)
+- The full pipeline view (attacks x defenses)
+- Containerization for self hosted deployment
 
 ## Stack
 
 Python, HuggingFace (`transformers`, `datasets`), `cleanlab`, FastAPI, Textual, Pydantic. (see all dependancies in requirements.txt)
-
+*Note: A planned optimization refactor will take effect sooner or later to pair Huggingface libraries with Unsloth which'll allow for faster fine tuning and less VRAM usage in training.*
    
 
 *Built by a solo developer as a learning driven security research project. Not affiliated with any organization.*
