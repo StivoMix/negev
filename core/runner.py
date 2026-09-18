@@ -1,6 +1,7 @@
 from core.models import AttackConfig, RunResult, MetricSnapshot
 from transformers import PreTrainedModel, PreTrainedTokenizerBase, AutoTokenizer, AutoModelForSequenceClassification
 from datasets import Dataset, load_dataset
+from datasets.exceptions import DatasetNotFoundError
 from core.training import fine_tune
 from core.evaluation import capture_metrics
 from core.attacks import LabelFlipAttack, Attack, ATTACK_REGISTRY
@@ -62,7 +63,7 @@ def _build_attack(config: AttackConfig) -> Attack:
     """
     attack_class: type[Attack] = ATTACK_REGISTRY.get(config.attack_type)
     if attack_class is None:
-        raise NotImplementedError(f"Action {config.attack_type} not yet implemented")
+        raise NotImplementedError(f"Action {config.attack_type} not implemented")
     
     return attack_class(
         poison_rate=config.poison_rate,
@@ -83,9 +84,12 @@ def _build_defense(config: AttackConfig):
     Returns:
         Function: A defense instance to be executed.
     """
+    if config.defense_type == "none":
+        return None
+
     defense_func = DEFENSE_REGISTRY.get(config.defense_type)
     if defense_func is None:
-        raise NotImplementedError(f"Action {config.defense_type} not yet implemented")
+        raise NotImplementedError(f"Action {config.defense_type} not implemented")
 
     return defense_func
 
@@ -178,18 +182,39 @@ def execute(config: AttackConfig) -> RunResult:
         _defense = _build_defense(config)
     except NotImplementedError as ne:
         return RunResult(
-            config = config,
+            config=config,
             status="failed",
             error_message=str(ne)
         )
 
-    _tokenizer = _load_tokenizer(config.target_model)
-    _dataset = _load_dataset(config)
-    _train, _eval = _split_dataset(_dataset, config)
+    try:
+        _dataset = _load_dataset(config)
+    except (DatasetNotFoundError, FileNotFoundError, ValueError):
+        return RunResult(
+            config=config,
+            status="failed",
+            error_message=f"Could not find or access dataset '{config.dataset_name}'"
+        )
+    except IndexError:
+        return RunResult(
+            config=config,
+            status="failed",
+            error_message=f"Dataset '{config.dataset_name}' contains fewer than {config.samples} samples"
+        )
+
+    try:
+        _model_base = _load_model(config.target_model)
+        _tokenizer = _load_tokenizer(config.target_model)
+    except (OSError, ValueError):
+        return RunResult(
+            config=config,
+            status="failed",
+            error_message=f"Could not load model or tokenizer '{config.target_model}'"
+        )
+
+    _train, _eval = _split_dataset(_dataset, config) # will add error catching to this and other stuff in a later dev stage!!!!11!
 
     # --- baseline model ---
-    _model_base = _load_model(config.target_model)
-
     _, base_metrics = _train_and_measure(
         model=_model_base,
         tokenizer=_tokenizer,
