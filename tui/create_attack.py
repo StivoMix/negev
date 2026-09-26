@@ -268,6 +268,10 @@ class CreateAttackScreen(ModalScreen[dict | None]):
             raw = self.query_one(widget_id, Input).value.strip()
             return int(raw) if raw else None
 
+        def number(widget_id: str) -> float | None:
+            raw = self.query_one(widget_id, Input).value.strip()
+            return float(raw) if raw else None
+
         def selected(widget_id: str):
             widget = self.query_one(widget_id, Select)
             return None if widget.is_blank() else widget.value
@@ -285,8 +289,8 @@ class CreateAttackScreen(ModalScreen[dict | None]):
             "epochs": integer("#epochs"),
             "samples": integer("#samples"),
             "device": text("#device"),
-            "test_size": text("#test_size"),
-            "learning_rate": text("#learning_rate"),
+            "test_size": number("#test_size"),
+            "learning_rate": number("#learning_rate"),
             "output_dir": text("#output_dir"),
         }
 
