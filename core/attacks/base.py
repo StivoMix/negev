@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from ._validation import validate_poison_rate
 from datasets import Dataset
 
 class Attack(ABC):
@@ -47,3 +48,11 @@ class Attack(ABC):
             float | None: Calculated attack success rate.
         """
         return None
+
+
+class RateBasedAttack(Attack):
+    """Base for attacks defined by a poison_rate over some candidate set of rows"""
+    def __init__(self, poison_rate: float, seed: int = 0):
+        validate_poison_rate(poison_rate)
+        self.poison_rate = poison_rate
+        self.seed = seed

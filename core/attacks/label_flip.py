@@ -1,11 +1,11 @@
 import random
 from datasets import Dataset
-from core.exceptions import InsufficientLabelsError, PoisonRateOutOfRange
-from .base import Attack
+from ._validation import validate_label_amount
+from .base import RateBasedAttack
 
 _MINIMAL_LABELS_FOR_FLIP = 2
 
-class LabelFlipAttack(Attack):
+class LabelFlipAttack(RateBasedAttack):
     def __init__(
         self,
         poison_rate: float,
@@ -23,12 +23,8 @@ class LabelFlipAttack(Attack):
         Raises:
             PoisonRateOutOfRange: If poison_rate is outside [0.0, 1.0].
         """
-        if not 0 <= poison_rate <= 1:
-            raise PoisonRateOutOfRange(poison_rate)
-        
-        self.poison_rate = poison_rate
+        super().__init__(poison_rate=poison_rate, seed=seed)
         self.target_column = target_column
-        self.seed = seed
         
 
     def apply(self, dataset: Dataset) -> Dataset:
@@ -54,8 +50,7 @@ class LabelFlipAttack(Attack):
 
         unique_labels = list(set(dataset[self.target_column]))
 
-        if len(unique_labels) < _MINIMAL_LABELS_FOR_FLIP:
-            raise InsufficientLabelsError(self.target_column, unique_labels)
+        validate_label_amount(unique_labels, _MINIMAL_LABELS_FOR_FLIP, self.target_column)
 
         total_rows = len(dataset)
         num_to_poison = int(total_rows * self.poison_rate)

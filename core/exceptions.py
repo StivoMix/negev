@@ -16,6 +16,17 @@ class InsufficientLabelsError(NegevBaseError):
         super().__init__(self.message)
 
 
+class LabelNotFoundError(NegevBaseError):
+    """Raised when a requested label is absent within a dataset"""
+    def __init__(self, label_name: str, target_column: str):
+        self.label_name = label_name
+        self.target_column = target_column
+        self.message = (
+            f"The requested label '{self.label_name}' wasn't found within column '{self.target_column}'."
+        )
+        super().__init__(self.message)
+
+
 class PoisonRateOutOfRange(NegevBaseError):
     """Raised when a poison rate exceeds its bounds of 0.0 to 1.0"""
     def __init__(self, poison_rate: float):
