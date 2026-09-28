@@ -34,19 +34,29 @@ class TargetedLabelFlipAttack(RateBasedAttack):
 
         Raises:
             ValueError: If source_label and target_label are the same.
-            LabelNotFoundError: If source_label or target_label doesn't appear in the dataset.
+            LabelNotFoundError: If source_label or target_label can't be matched to the dataset's labels.
 
         Returns:
             Dataset: The poisoned dataset with flipped labels.
         """
-        if self.source_label == self.target_label:
-            raise ValueError(f"source_label and target_label must differ (both were '{self.source_label}')")
-        if self.source_label not in dataset[self.target_column]:
-            raise LabelNotFoundError(self.target_column, self.source_label)
-        if self.target_label not in dataset[self.target_column]:
-            raise LabelNotFoundError(self.target_column, self.target_label)
+        labels = dataset[self.target_column]
+        label_type = type(labels[0])
 
-        source_indices = [idx for idx, label in enumerate(dataset[self.target_column]) if label == self.source_label]
+        try:
+            source, target = label_type(self.source_label), label_type(self.target_label)
+        except (TypeError, ValueError):
+            raise LabelNotFoundError(self.target_column, f"{self.source_label} / {self.target_label}")
+
+        if source == target:
+            raise ValueError(f"source_label and target_label must differ (both were '{source}')")
+
+        unique_labels = set(labels)
+        if source not in unique_labels:
+            raise LabelNotFoundError(self.target_column, source)
+        if target not in unique_labels:
+            raise LabelNotFoundError(self.target_column, target)
+
+        source_indices = [idx for idx, label in enumerate(labels) if label == source]
         num_to_poison = int(len(source_indices) * self.poison_rate)
 
         if num_to_poison == 0:
@@ -57,7 +67,7 @@ class TargetedLabelFlipAttack(RateBasedAttack):
 
         def _map_poisoned_row(row: dict, index: int) -> dict:
             if index in poison_indices:
-                row[self.target_column] = self.target_label
+                row[self.target_column] = target
             return row
 
         return dataset.map(_map_poisoned_row, with_indices=True)
