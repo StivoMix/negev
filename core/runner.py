@@ -6,6 +6,7 @@ from core.training import fine_tune
 from core.evaluation import capture_metrics
 from core.attacks import LabelFlipAttack, Attack, ATTACK_REGISTRY
 from core.defenses import label_noise_filter_apply, DEFENSE_REGISTRY
+from core.exceptions import NegevBaseError
 from time import perf_counter
 
 def _load_model(model_id: str) -> PreTrainedModel:
@@ -229,6 +230,15 @@ def execute(config: AttackConfig) -> RunResult:
 
     _train, _eval = _split_dataset(_dataset, config) # will add error catching to this and other stuff in a later dev stage!!!!11!
 
+    try:
+        _train_poisoned = _attack.apply(_train)
+    except (NegevBaseError, ValueError) as e:
+        return RunResult(
+            config=config,
+            status="failed",
+            error_message=str(e)
+        )
+
     # --- baseline model ---
     _, base_metrics = _train_and_measure(
         model=_model_base,
@@ -240,7 +250,6 @@ def execute(config: AttackConfig) -> RunResult:
 
     # --- poisoned model ---
     _model_poisoned = _load_model(config.target_model)
-    _train_poisoned = _attack.apply(_train)
 
     _, poisoned_metrics = _train_and_measure(
         model=_model_poisoned,
