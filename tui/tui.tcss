@@ -43,6 +43,11 @@ CreateAttackScreen {
     align: center middle;
 }
 
+#attack_extra_fields {
+    width: 100%;
+    height: auto;
+}
+
 #create-attack-dialog {
     width: 72;
     height: 90%;

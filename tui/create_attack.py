@@ -139,9 +139,10 @@ class CreateAttackScreen(ModalScreen[dict | None]):
 
     BINDINGS = [("escape", "cancel", "Cancel")]
 
-    def __init__(self, attacks: list[str], defenses: list[str]) -> None:
+    def __init__(self, attacks: dict[str, dict[str, list]], defenses: list[str]) -> None:
         super().__init__()
-        self.attacks = attacks
+        self.attack_details = attacks
+        self.attacks = list(attacks)
         self.defenses = defenses
 
     def compose(self) -> ComposeResult:
@@ -150,10 +151,12 @@ class CreateAttackScreen(ModalScreen[dict | None]):
             with VerticalScroll(id="create-attack-form"):
                 yield Label("Attack type *")
                 yield Select(
-                    [(a, a) for a in self.attacks],
+                    [(attack_name.replace("_", " ").title(), attack_name) for attack_name in self.attacks],
                     id="attack_type",
                     prompt="Select attack",
                 )
+
+                yield Vertical(id="attack_extra_fields")
 
                 yield Label("Target model *")
                 yield Input(
@@ -234,6 +237,25 @@ class CreateAttackScreen(ModalScreen[dict | None]):
             return
         self.dismiss(self._collect())
 
+    @on(Select.Changed, "#attack_type")
+    async def _update_attack_fields(self, event: Select.Changed) -> None:
+        container = self.query_one("#attack_extra_fields", Vertical)
+        await container.remove_children()
+
+        attack = self.attack_details.get(event.value, {})
+        widgets = []
+
+        for field in attack.get("extra_fields", []):
+            name = field["name"]
+            required = " *" if field.get("required", False) else ""
+            label = name.replace("_", " ").title()
+
+            widgets.append(Label(f"{label}{required}"))
+            widgets.append(Input(id=f"extra_{name}"))
+
+        if widgets:
+            await container.mount(*widgets)
+
     def action_cancel(self) -> None:
         self.dismiss(None)
 
@@ -256,6 +278,18 @@ class CreateAttackScreen(ModalScreen[dict | None]):
             value = config[key]
             if value is None or (isinstance(value, str) and not value.strip()):
                 missing.append(label)
+
+        attack_type = config["attack_type"]
+        extra_fields = self.attack_details.get(attack_type, {}).get("extra_fields", [])
+
+        for field in extra_fields:
+            if not field.get("required", False):
+                continue
+
+            value = config["extra_params"].get(field["name"])
+            if value is None or not value.strip():
+                missing.append(field["name"].replace("_", " ").title())
+
         return missing
 
     def _collect(self) -> dict:
@@ -276,8 +310,13 @@ class CreateAttackScreen(ModalScreen[dict | None]):
             widget = self.query_one(widget_id, Select)
             return None if widget.is_blank() else widget.value
 
+        attack_type = selected("#attack_type")
+        extra_fields = self.attack_details.get(attack_type, {}).get("extra_fields", [])
+        extra_params = {field["name"]: self.query_one(f"#extra_{field['name']}", Input).value for field in extra_fields}
+
         return {
-            "attack_type": selected("#attack_type"),
+            "attack_type": attack_type,
+            "extra_params": extra_params,
             "target_model": text("#target_model"),
             "poison_rate": self.query_one("#poison_rate", Slider).value,
             "dataset_name": text("#dataset_name"),

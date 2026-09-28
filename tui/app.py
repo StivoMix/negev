@@ -172,10 +172,10 @@ class NegevApp(App):
         """Open the Create Attack modal, populating dropdowns from /capabilities."""
         try:
             caps = await self.client.get("/capabilities")
-            attacks = caps.get("attacks", [])
+            attacks = caps.get("attacks", {})
             defenses = caps.get("defenses", [])
         except httpx.HTTPError:
-            attacks, defenses = [], []
+            attacks, defenses = {}, []
         config = await self.push_screen_wait(CreateAttackScreen(attacks, defenses))
         await self.on_attack_submitted(config)
 
