@@ -20,8 +20,16 @@ _runs: dict[str, RunResult] = {} # storing this in memory for now. will use DBs 
 
 
 def _run_in_background(run_id: str, config: AttackConfig) -> None:
-    result = execute(config)
-    _runs[run_id] = result # overwrites entry with the finished result
+    try:
+        result = execute(config)
+    except Exception as e:
+        result = RunResult(
+            run_id=run_id,
+            config=config,
+            status="failed",
+            error_message=f"Unexpected error: {type(e).__name__}",
+        )
+    _runs[run_id] = result
 
 
 @app.get("/health")
