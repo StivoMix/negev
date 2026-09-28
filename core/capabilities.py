@@ -9,6 +9,9 @@ def get_capabilities() -> dict:
         dict: A dictionary containing implemented attacks and defenses.
     """
     return {
-        "attacks": list(ATTACK_REGISTRY.keys()),
+        "attacks": {
+            name: {k: v for k, v in metadata.items() if k != "class"}
+            for name, metadata in ATTACK_REGISTRY.items()
+        },
         "defenses": ["none"] + list(DEFENSE_REGISTRY.keys()),
     }

@@ -6,7 +6,7 @@ attacks, track model performance metrics, and log benchmark run execution data.
 """
 
 from pydantic import BaseModel, Field, computed_field
-from typing import Literal
+from typing import Literal, Any
 from datetime import datetime
 import uuid
 
@@ -60,6 +60,7 @@ class AttackConfig(BaseModel):
     test_size: float = 0.1
     learning_rate: float = 2e-5
     output_dir: str = "./training_output"
+    extra_params: dict[str, Any] = Field(default_factory=dict)
 
 
 

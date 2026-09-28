@@ -57,19 +57,34 @@ def _build_attack(config: AttackConfig) -> Attack:
 
     Raises:
         NotImplementedError: Raised when the attack is not implemented.
+        ValueError: Raised when required extra params for the attack are missing.
 
     Returns:
         Attack: An attack instance to be executed.
     """
-    attack_class: type[Attack] = ATTACK_REGISTRY.get(config.attack_type)
-    if attack_class is None:
+    entry = ATTACK_REGISTRY.get(config.attack_type)
+    if entry is None:
         raise NotImplementedError(f"Action {config.attack_type} not implemented")
     
-    return attack_class(
-        poison_rate=config.poison_rate,
-        target_column=config.target_column,
-        seed=config.seed
-    )
+    attack_class: type[Attack] = entry["class"]
+    required_fields = [field for field in entry.get("extra_fields", []) if field.get("required", False)]
+
+    missing = [field["name"] for field in required_fields if field["name"] not in config.extra_params]
+    if missing:
+        raise ValueError(f"Missing required fields for {config.attack_type}: {missing}")
+
+    """NOTE: This match case is temporary until more attacks are implemented
+    which'll give me more insight into the general attack pattern
+    at which point i'll build a cleaner, more general system."""
+    match config.attack_type:
+        case "label_flip":
+            return attack_class(poison_rate=config.poison_rate, target_column=config.target_column, seed=config.seed)
+        case "targeted_label_flip":
+            return attack_class(
+                poison_rate=config.poison_rate, target_column=config.target_column, seed=config.seed,
+                source_label=config.extra_params["source_label"], target_label=config.extra_params["target_label"]
+            )
+    
 
 def _build_defense(config: AttackConfig):
     """
@@ -180,11 +195,11 @@ def execute(config: AttackConfig) -> RunResult:
     try:
         _attack = _build_attack(config)
         _defense = _build_defense(config)
-    except NotImplementedError as ne:
+    except (NotImplementedError, ValueError) as e:
         return RunResult(
             config=config,
             status="failed",
-            error_message=str(ne)
+            error_message=str(e)
         )
 
     try:
