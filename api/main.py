@@ -10,6 +10,7 @@ from fastapi import FastAPI, HTTPException, BackgroundTasks
 from core.models import AttackConfig, RunResult
 from core.runner import execute
 from core.capabilities import get_capabilities
+import traceback
 
 TITLE = "Negev"
 VERSION = "0.1.0"
@@ -23,6 +24,7 @@ def _run_in_background(run_id: str, config: AttackConfig) -> None:
     try:
         result = execute(config)
     except Exception as e:
+        traceback.print_exc()
         result = RunResult(
             run_id=run_id,
             config=config,
