@@ -18,6 +18,15 @@ class TargetedLabelFlipAttack(RateBasedAttack):
         self.target_label = target_label
 
 
+    def _resolve_labels(self, labels: list) -> tuple:
+        """Convert source/target labels to the same type as the dataset's labels."""
+        label_type = type(labels[0])
+        try:
+            return label_type(self.source_label), label_type(self.target_label)
+        except (TypeError, ValueError):
+            raise LabelNotFoundError(self.target_column, f"{self.source_label} / {self.target_label}")
+
+
     def apply(self, dataset: Dataset) -> Dataset:
         """
         Flip a poison_rate amount of source labels into target labels within the given dataset.
@@ -40,12 +49,7 @@ class TargetedLabelFlipAttack(RateBasedAttack):
             Dataset: The poisoned dataset with flipped labels.
         """
         labels = dataset[self.target_column]
-        label_type = type(labels[0])
-
-        try:
-            source, target = label_type(self.source_label), label_type(self.target_label)
-        except (TypeError, ValueError):
-            raise LabelNotFoundError(self.target_column, f"{self.source_label} / {self.target_label}")
+        source, target = self._resolve_labels(labels)
 
         if source == target:
             raise ValueError(f"source_label and target_label must differ (both were '{source}')")
@@ -71,3 +75,18 @@ class TargetedLabelFlipAttack(RateBasedAttack):
             return row
 
         return dataset.map(_map_poisoned_row, with_indices=True)
+
+    def measure_success(
+        self,
+        predictions: list[int],
+        truths: list[int]
+    ) -> float | None:
+        """ASR is the fraction of true source class rows that the model
+        predicts as the target class. An unpoisoned model has a nonzero 
+        ASR too (any mistake on a source row can land in the target class), 
+        so compare it against the baseline model's ASR."""
+        source, target = self._resolve_labels(truths)
+        source_rows = [prediction for prediction, truth in zip(predictions, truths) if truth == source]
+        if not source_rows:
+            return None
+        return sum(prediction == target for prediction in source_rows) / len(source_rows)
