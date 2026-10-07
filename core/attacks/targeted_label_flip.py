@@ -24,7 +24,7 @@ class TargetedLabelFlipAttack(RateBasedAttack):
         try:
             return label_type(self.source_label), label_type(self.target_label)
         except (TypeError, ValueError):
-            raise LabelNotFoundError(self.target_column, f"{self.source_label} / {self.target_label}")
+            raise LabelNotFoundError(f"{self.source_label} / {self.target_label}", self.target_column)
 
 
     def apply(self, dataset: Dataset) -> Dataset:
