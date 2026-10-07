@@ -4,6 +4,7 @@ from datasets import Dataset, load_dataset
 from datasets.exceptions import DatasetNotFoundError
 from core.training import fine_tune
 from core.evaluation import capture_metrics
+from core.evaluation.metrics import get_predictions
 from core.attacks import LabelFlipAttack, Attack, ATTACK_REGISTRY
 from core.defenses import label_noise_filter_apply, DEFENSE_REGISTRY
 from core.exceptions import NegevBaseError
@@ -114,7 +115,8 @@ def _train_and_measure(
     tokenizer: PreTrainedTokenizerBase,
     train_ds: Dataset,
     eval_ds: Dataset,
-    config: AttackConfig
+    config: AttackConfig,
+    attack: Attack
 ) -> tuple[PreTrainedModel, MetricSnapshot]:
     """
     Fine tune a model and measure its metrics.
@@ -129,6 +131,7 @@ def _train_and_measure(
         train_ds (Dataset): Training split of a dataset for the model to train on.
         eval_ds (Datset): Testing split of a dataset for the model to be tested on.
         config (AttackConfig): User's built attack configuration.
+        attack (Attack): User's attack object.
 
     Returns:
         tuple[PreTrainedModel, MetricSnapshot]: A tuple containing the new fine tuned model and its metrics.
@@ -152,8 +155,12 @@ def _train_and_measure(
         tokenizer=tokenizer,
         dataset=eval_ds,
         text_column=config.text_column,
-        target_column=config.target_column
+        target_column=config.target_column,
+        device=config.device
     )
+
+    predictions = get_predictions(trained_model, tokenizer, eval_ds, config.text_column, config.device)
+    metrics.attack_success_rate = attack.measure_success(predictions, eval_ds[config.target_column])
 
     return trained_model, metrics
     
@@ -245,7 +252,8 @@ def execute(config: AttackConfig) -> RunResult:
         tokenizer=_tokenizer,
         train_ds=_train,
         eval_ds=_eval,
-        config=config
+        config=config,
+        attack=_attack
     )
 
     # --- poisoned model ---
@@ -256,7 +264,8 @@ def execute(config: AttackConfig) -> RunResult:
         tokenizer=_tokenizer,
         train_ds=_train_poisoned,
         eval_ds=_eval,
-        config=config
+        config=config,
+        attack=_attack
     )
 
     # --- sanitized model (only if configured) ---
@@ -279,7 +288,8 @@ def execute(config: AttackConfig) -> RunResult:
             tokenizer=_tokenizer,
             train_ds=_train_sanitized,
             eval_ds=_eval,
-            config=config
+            config=config,
+            attack=_attack
         )
 
     elapsed_time = perf_counter() - _start

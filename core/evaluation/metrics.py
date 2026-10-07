@@ -3,7 +3,7 @@ from datasets import Dataset
 from transformers import PreTrainedModel, PreTrainedTokenizerBase, pipeline
 import evaluate
 
-def _get_predictions(
+def get_predictions(
     model: PreTrainedModel,
     tokenizer: PreTrainedTokenizerBase,
     dataset: Dataset,
@@ -136,7 +136,7 @@ def capture_metrics(
     Returns:
         MetricSnapshot: The captured metrics according to calculations.
     """
-    predictions = _get_predictions(model, tokenizer, dataset, text_column, device)
+    predictions = get_predictions(model, tokenizer, dataset, text_column, device)
     truths = dataset[target_column]
 
     accuracy = _get_accuracy(predictions, truths)
