@@ -28,9 +28,8 @@ class Attack(ABC):
 
     def measure_success(
         self,
-        clean_predictions: list[int],
-        poisoned_predictions: list[int],
-        clean_truths: list[int],
+        predictions: list[int],
+        truths: list[int]
     ) -> float | None:
         """
         Compute attack specific attack success rate.
@@ -40,9 +39,8 @@ class Attack(ABC):
         a real notion of success (backdoor, targeted misclassification, etc...).
 
         Args:
-            clean_predictions (list[int]): A list of clean dataset model predictions.
-            poisoned_predictions (list[int]): A list of poisoned dataset model predictions.
-            clean_truths (list[int]): A list of truths in the clean dataset.
+            predictions (list[int]): A list of raw model predictions.
+            truths (list[int]): A list of truths in the dataset.
 
         Returns:
             float | None: Calculated attack success rate.
