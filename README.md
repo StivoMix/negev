@@ -30,14 +30,12 @@ So far tested end to end on DistilBERT + IMDB as the development target:
   **Training**: fine tuning loop wrapping HuggingFace `Trainer` with explicit train/eval splits
   **Evaluation**: accuracy + attack success rate (ASR) for targeted attacks, captured for the baseline, poisoned and defended models
   **Defenses**: `cleanlab` based label noise filtering (confident learning), verified to measurably recover accuracy on poisoned data
-  **Orchestration**: a runner that ties the full attack -> train  -> defend -> retrain pipeline into a single call *(in progress)*
+  **Orchestration**: a runner that ties the full attack -> train  -> defend -> retrain pipeline into a single call
   **Interfaces**: a FastAPI backend (non blocking runs, `/capabilities` endpoint that drives the UI) and an async Textual terminal UI with a dynamic attack form and live run polling, decoupled so the core logic never depends on either
 
 ## Results
 
-## Results
-
-Targeted label flip (class 1 -> 0) on DistilBERT + IMDB, 2k samples (1.6k train / 400 eval), 3 epochs, poison rate of 50%, cleanlab label noise filtering as the defense. Mean ± std over 5 seeds (0-4):
+Targeted label flip (class 1 -> 0) on DistilBERT + IMDB, 2k samples (1.6k train / 400 eval), 3 epochs, poison rate of 50% of class 1 training rows, cleanlab label noise filtering as the defense. Mean ± std over 5 seeds (0-4):
 
 | | Accuracy | ASR |
 |---|---|---|
@@ -73,7 +71,7 @@ The **terminal UI is the exception**: frontend/design isn't where my learning fo
 
 ## Roadmap (rough)
 
-- More attacks: targeted label flip, backdoor triggers, LoRA weight poisoning, feature collision
+- More attacks: backdoor triggers, LoRA weight poisoning, feature collision, etc
 - More defenses: embedding based outlier detection (`pyod`)
 - The full pipeline view (attacks x defenses)
 - Containerization for self hosted deployment
