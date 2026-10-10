@@ -22,7 +22,7 @@ _runs: dict[str, RunResult] = {} # storing this in memory for now. will use DBs 
 
 def _run_in_background(run_id: str, config: AttackConfig) -> None:
     try:
-        result = execute(config.model_copy(update={"run_id": run_id}))
+        result = execute(config).model_copy(update={"run_id": run_id})
     except Exception as e:
         traceback.print_exc()
         result = RunResult(
