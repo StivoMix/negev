@@ -26,14 +26,26 @@ Training data poisoning is one of the least tooled up areas of LLM security. Mos
 
 So far tested end to end on DistilBERT + IMDB as the development target:
 
-  **Attacks**: untargeted label flipping (random, multi class, seeded/reproducible)
+  **Attacks**: untargeted label flipping and targeted label flipping (source -> target class), both seeded/reproducible
   **Training**: fine tuning loop wrapping HuggingFace `Trainer` with explicit train/eval splits
-  **Evaluation**: accuracy capture, with a metrics snapshot data model
+  **Evaluation**: accuracy + attack success rate (ASR) for targeted attacks, captured for the baseline, poisoned and defended models
   **Defenses**: `cleanlab` based label noise filtering (confident learning), verified to measurably recover accuracy on poisoned data
   **Orchestration**: a runner that ties the full attack -> train  -> defend -> retrain pipeline into a single call *(in progress)*
-  **Interfaces**: a FastAPI backend and a Textual terminal UI, decoupled so the core logic never depends on either
+  **Interfaces**: a FastAPI backend (non blocking runs, `/capabilities` endpoint that drives the UI) and an async Textual terminal UI with a dynamic attack form and live run polling, decoupled so the core logic never depends on either
 
-Verified result so far: at a 30% label flip poison rate on 2,000 samples, the cleanlab defense flagged ~537 rows and recovered roughly +0.05 accuracy versus training on the poisoned data directly.
+## Results
+
+## Results
+
+Targeted label flip (class 1 -> 0) on DistilBERT + IMDB, 2k samples (1.6k train / 400 eval), 3 epochs, poison rate of 50%, cleanlab label noise filtering as the defense. Mean ± std over 5 seeds (0-4):
+
+| | Accuracy | ASR |
+|---|---|---|
+| Baseline | 89.8 ± 2.3% | 10.1 ± 3.1% |
+| Poisoned | 73.0 ± 3.0% | 51.5 ± 5.5% |
+| Defended | 78.3 ± 3.1% | 40.3 ± 5.9% |
+
+The attack raises ASR about 5x. Cleanlab filtering recovered 11 ± 4 points of ASR (and about 5 points of accuracy) and helped in all 5 seeds, but defended ASR is still about 4x baseline: confident learning handles this attack only partially.
 
 ## Architecture
 
