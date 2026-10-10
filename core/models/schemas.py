@@ -18,7 +18,7 @@ class AttackConfig(BaseModel):
     Attributes:
         attack_type (Literal): The type of the attack to run on a model
         target_model (str): The target model to run the attack on
-        poison_rate (float): Percentage of the dataset that'll be corrupted. 10% by default, min 0% and max 100%
+        poison_rate (float): Percentage of the targetted data that'll be poisoned. 10% by default, min 0% and max 100%
         dataset_name (str): The ID of the dataset in huggingface
         notes (str): Notes written by the attacker to document testing
         defense_type (Literal): The type of defense to use on a poisoned dataset. Defaults to "none".
