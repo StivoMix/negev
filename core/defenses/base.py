@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 from datasets import Dataset
+from models import DefenseMethod
 from transformers import PreTrainedModel, PreTrainedTokenizerBase
 from core.models import FilterReport
-from typing import Literal
 import numpy as np
 
 class Defense(ABC):
@@ -14,12 +14,7 @@ class Defense(ABC):
         apply: A method that returns the filtered dataset and a FilterReport.
     """
     def __init__(self,
-        method: Literal[
-            "label_noise_filter",
-            "isolation_forest",
-            "lof",
-            "embedding_cluster"
-        ],
+        method: DefenseMethod,
         target_column: str,
         text_column: str,
         device: str = "cpu"
@@ -36,7 +31,7 @@ class Defense(ABC):
 
 
     @staticmethod
-    def _max_length(tokenizer: PreTrainedTokenizerBase):
+    def _max_length(tokenizer: PreTrainedTokenizerBase) -> int:
         return tokenizer.model_max_length if tokenizer.model_max_length <= 1e6 else 512
 
 
@@ -46,6 +41,8 @@ class Defense(ABC):
 
         Args:
             dataset (Dataset): The poisoned dataset to filter.
+            model (PreTrainedModel): The model to apply the defense to.
+            tokenizer (PreTrainedTokenizerBase): The tokenizer for the model to use.
 
         Returns:
             tuple(Dataset, FilterReport): A cleaned dataset with the defense method applied
