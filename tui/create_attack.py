@@ -179,11 +179,11 @@ class CreateAttackScreen(ModalScreen[dict | None]):
                 yield Label("Samples (blank = full dataset)")
                 yield Input(value=None, id="samples", type="integer")
 
-                yield Label("Defense type *")
+                yield Label("Defense type")
                 yield Select(
                     [(defense_name.replace("_", " ").title(), defense_name) for defense_name in self.defenses],
                     id="defense_type",
-                    prompt="Select defense"
+                    prompt="No defense"
                 )
 
                 with Collapsible(title="Advanced", id="advanced"):
