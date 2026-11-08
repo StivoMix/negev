@@ -52,6 +52,13 @@ class Defense(ABC):
         model.eval()
 
         suspicious_mask = self.find_suspects(dataset=dataset, model=model, tokenizer=tokenizer)
+        
+        if not isinstance(suspicious_mask, np.ndarray) or suspicious_mask.dtype != bool or suspicious_mask.shape != (len(dataset),):
+            raise ValueError(
+                f"find_suspects must return a 1D boolean numpy array of shape ({len(dataset)},), "
+                f"got shape {getattr(suspicious_mask, 'shape', None)} and dtype {getattr(suspicious_mask, 'dtype', None)}"
+            )
+        
         keep_indices = np.where(~suspicious_mask)[0]
         clean_dataset = dataset.select(keep_indices.tolist())
         return clean_dataset, FilterReport(
