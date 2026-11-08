@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from datasets import Dataset
+from transformers import PreTrainedModel, PreTrainedTokenizerBase
 from core.models import FilterReport
 from typing import Literal
 import numpy as np
@@ -12,21 +13,34 @@ class Defense(ABC):
         find_suspects (required): An abstract method defining the defense pipeline.
         apply: A method that returns the filtered dataset and a FilterReport.
     """
-    def __init__(self, method: Literal[
-        "label_noise_filter",
-        "isolation_forest",
-        "lof",
-        "embedding_cluster"
-    ]):
+    def __init__(self,
+        method: Literal[
+            "label_noise_filter",
+            "isolation_forest",
+            "lof",
+            "embedding_cluster"
+        ],
+        target_column: str,
+        text_column: str,
+        device: str = "cpu"
+    ):
         self.method = method
+        self.target_column = target_column
+        self.text_column = text_column
+        self.device = device
 
 
     @abstractmethod
-    def find_suspects(self, dataset: Dataset) -> np.ndarray:
+    def find_suspects(self, dataset: Dataset, model: PreTrainedModel, tokenizer: PreTrainedTokenizerBase) -> np.ndarray:
         ...
 
 
-    def apply(self, dataset: Dataset) -> tuple[Dataset, FilterReport]:
+    @staticmethod
+    def _max_length(tokenizer: PreTrainedTokenizerBase):
+        return tokenizer.model_max_length if tokenizer.model_max_length <= 1e6 else 512
+
+
+    def apply(self, dataset: Dataset, model: PreTrainedModel, tokenizer: PreTrainedTokenizerBase) -> tuple[Dataset, FilterReport]:
         """
         Apply the defense on a selected dataset.
 
@@ -37,7 +51,10 @@ class Defense(ABC):
             tuple(Dataset, FilterReport): A cleaned dataset with the defense method applied
             alongside a FilterReport object containing info about the defense pipeline metrics.
         """
-        suspicious_mask = self.find_suspects(dataset=dataset)
+        model = model.to(self.device)
+        model.eval()
+
+        suspicious_mask = self.find_suspects(dataset=dataset, model=model, tokenizer=tokenizer)
         keep_indices = np.where(~suspicious_mask)[0]
         clean_dataset = dataset.select(keep_indices.tolist())
         return clean_dataset, FilterReport(
@@ -45,7 +62,3 @@ class Defense(ABC):
             rows_flagged=int(suspicious_mask.sum()),
             method=self.method
         )
-
-    
-
-    
