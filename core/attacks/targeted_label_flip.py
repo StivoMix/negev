@@ -56,9 +56,9 @@ class TargetedLabelFlipAttack(RateBasedAttack):
 
         unique_labels = set(labels)
         if source not in unique_labels:
-            raise LabelNotFoundError(self.target_column, source)
+            raise LabelNotFoundError(source, self.target_column)
         if target not in unique_labels:
-            raise LabelNotFoundError(self.target_column, target)
+            raise LabelNotFoundError(target, self.target_column)
 
         source_indices = [idx for idx, label in enumerate(labels) if label == source]
         num_to_poison = int(len(source_indices) * self.poison_rate)
