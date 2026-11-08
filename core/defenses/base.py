@@ -1,8 +1,7 @@
 from abc import ABC, abstractmethod
 from datasets import Dataset
-from models import DefenseMethod
 from transformers import PreTrainedModel, PreTrainedTokenizerBase
-from core.models import FilterReport
+from core.models import FilterReport, DefenseMethod
 import numpy as np
 
 class Defense(ABC):
