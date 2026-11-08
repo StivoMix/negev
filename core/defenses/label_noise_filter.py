@@ -1,76 +1,57 @@
 from datasets import Dataset
 from transformers import PreTrainedModel, PreTrainedTokenizerBase
 from cleanlab.filter import find_label_issues
-from core.models import FilterReport
 import numpy as np
 import torch as tr
 import torch.nn.functional as tr_functional
+from base import Defense
 
-_METHOD_NAME = "label_noise_filter"
 
-def label_noise_filter_apply(
-    dataset: Dataset,
-    model: PreTrainedModel,
-    tokenizer: PreTrainedTokenizerBase,
-    target_column: str,
-    text_column: str,
-    device: str = "cpu"
-) -> tuple[Dataset, FilterReport]:
-    """
-    Filters out suspicious labels and drops their rows.
+class LabelNoiseFilter(Defense):
+    def __init__(self, target_column: str, text_column: str, device: str = "cpu"):
+        self.target_column = target_column
+        self.text_column = text_column
+        self.device = device
+        super().__init__("label_noise_filter", target_column, text_column, device)
 
-    Uses the label noise filtering method (aka confidence learning) to flag
-    suspicious labels based on model's maximal confidence threshold for an
-    individual class and drop all suspicious rows to potentially enhance
-    the accuracy of the model that'll be trained on the cleaned dataset.
-    Read more about label noise filtering at:
-    https://dl.acm.org/doi/10.1613/JAIR.1.12125
+    def find_suspects(self, dataset: Dataset, model: PreTrainedModel, tokenizer: PreTrainedTokenizerBase) -> np.ndarray:
+        """
+        Filters out suspicious labels and returns suspicious mask.
 
-    Args:
-        dataset (Dataset): A dataset to be scanned for potentially poisoned labels.
-        model (PreTrainedModel): The model to predict labels in the dataset.
-        tokenizer (PreTrainedTokenizerbase): The tokenizer to be used for the model.
-        target_column (str): The name of the column holding the labels in the dataset.
-        text_column (str): The name of the column holding sequences to be predicted.
-        device (str, optional): Device for the model to run on. Defaults to "cpu".
+        Uses the label noise filtering method (aka confidence learning) to flag
+        suspicious labels based on model's maximal confidence threshold for an
+        individual class and drop all suspicious rows to potentially enhance
+        the accuracy of the model that'll be trained on the cleaned dataset.
+        Read more about label noise filtering at:
+        https://dl.acm.org/doi/10.1613/JAIR.1.12125
 
-    Returns:
-        tuple[Dataset, FilterReport]: A tuple containing the cleaned dataset and a filter report from the cleaning process.
-    """
-    max_length = tokenizer.model_max_length
-    if max_length > 1e6:
-        max_length = 512
+        Args:
+            dataset (Dataset): A dataset to be scanned for potentially poisoned labels.
+            model (PreTrainedModel): The model to predict labels in the dataset.
+            tokenizer (PreTrainedTokenizerbase): The tokenizer to be used for the model.
 
-    model = model.to(device)
-    model.eval()
-    all_probabilities = []
+        Returns:
+            ndarray: A 1-dimensional boolean numpy array representing the suspicious mask.
+        """
+        max_length = self._max_length(tokenizer)
+        all_probabilities = []
 
-    with tr.no_grad():
-        for row in dataset[text_column]:
-            inputs = tokenizer(
-                row,
-                return_tensors="pt",
-                truncation=True,
-                max_length=max_length
-            ).to(model.device)
-            logits = model(**inputs).logits
-            probs = tr_functional.softmax(logits, dim=-1)[0]
-            all_probabilities.append(probs.cpu().numpy())
+        with tr.no_grad():
+            for row in dataset[self.text_column]:
+                inputs = tokenizer(
+                    row,
+                    return_tensors="pt",
+                    truncation=True,
+                    max_length=max_length
+                ).to(model.device)
+                logits = model(**inputs).logits
+                probs = tr_functional.softmax(logits, dim=-1)[0]
+                all_probabilities.append(probs.cpu().numpy())
 
-    predictions_probabilities = np.array(all_probabilities)
-    dataset_labels = np.array(dataset[target_column])
+        predictions_probabilities = np.array(all_probabilities)
+        dataset_labels = np.array(dataset[self.target_column])
 
-    suspicious_mask = find_label_issues(
-        labels=dataset_labels,
-        pred_probs=predictions_probabilities,
-    )
-
-    keep_indices = np.where(~suspicious_mask)[0]
-    
-    clean_dataset = dataset.select(keep_indices.tolist()) # keep only non suspicious rows
-
-    return clean_dataset, FilterReport(
-        total_rows=len(dataset),
-        rows_flagged=int(suspicious_mask.sum()),
-        method=_METHOD_NAME
-    )
+        return find_label_issues(
+            labels=dataset_labels,
+            pred_probs=predictions_probabilities,
+        )

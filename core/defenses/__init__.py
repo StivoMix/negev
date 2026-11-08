@@ -1,5 +1,6 @@
-from .label_noise_filter import label_noise_filter_apply
+from .label_noise_filter import LabelNoiseFilter
+from .base import Defense
 
 DEFENSE_REGISTRY = {
-    "label_noise_filter": label_noise_filter_apply
+    "label_noise_filter": LabelNoiseFilter
 }

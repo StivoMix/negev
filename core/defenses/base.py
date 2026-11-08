@@ -11,6 +11,7 @@ class Defense(ABC):
 
     Methods:
         find_suspects (required): An abstract method defining the defense pipeline.
+        _max_length (helper): Method returns the max model length.
         apply: A method that returns the filtered dataset and a FilterReport.
     """
     def __init__(self,

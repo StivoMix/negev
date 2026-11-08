@@ -6,7 +6,7 @@ from core.training import fine_tune
 from core.evaluation import capture_metrics
 from core.evaluation.metrics import get_predictions
 from core.attacks import LabelFlipAttack, Attack, ATTACK_REGISTRY
-from core.defenses import label_noise_filter_apply, DEFENSE_REGISTRY
+from core.defenses import LabelNoiseFilter, Defense, DEFENSE_REGISTRY
 from core.exceptions import NegevBaseError
 from time import perf_counter
 
@@ -88,7 +88,7 @@ def _build_attack(config: AttackConfig) -> Attack:
             )
     
 
-def _build_defense(config: AttackConfig):
+def _build_defense(config: AttackConfig) -> Defense:
     """
     Returns a defense instance given an attack configuration.
 
@@ -99,16 +99,16 @@ def _build_defense(config: AttackConfig):
         NotImplementedError: Raised when the defense is not implemented.
 
     Returns:
-        Function: A defense instance to be executed.
+        Defense: A defense method to be executed.
     """
     if config.defense_type == "none":
         return None
 
-    defense_func = DEFENSE_REGISTRY.get(config.defense_type)
-    if defense_func is None:
+    defense_method = DEFENSE_REGISTRY.get(config.defense_type)
+    if defense_method is None:
         raise NotImplementedError(f"Action {config.defense_type} not implemented")
 
-    return defense_func
+    return defense_method
 
 def _train_and_measure(
     model: PreTrainedModel,
@@ -273,13 +273,10 @@ def execute(config: AttackConfig) -> RunResult:
     sanitized_report = None
 
     if config.defense_type != 'none':
-        _train_sanitized, sanitized_report = _defense(
+        _train_sanitized, sanitized_report = _defense.apply(
             dataset=_train_poisoned,
             model=_model_poisoned,
             tokenizer=_tokenizer,
-            target_column=config.target_column,
-            text_column=config.text_column,
-            device=config.device
         )
         _model_sanitized = _load_model(config.target_model)
         
