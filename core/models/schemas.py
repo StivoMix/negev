@@ -10,6 +10,24 @@ from typing import Literal, Any
 from datetime import datetime
 import uuid
 
+DefenseMethod = Literal[
+    "label_noise_filter",
+    "isolation_forest",
+    "lof",
+    "embedding_cluster"
+]
+
+AttackMethod = Literal[
+    "label_flip",
+    "targeted_label_flip",
+    "data_injection",
+    "data_churn",
+    "backdoor_trigger",
+    "clean_label_backdoor",
+    "lora_weight_poison",
+    "gradient_manipulation",
+    "feature_collision",
+]
 
 class AttackConfig(BaseModel):
     """
@@ -32,27 +50,14 @@ class AttackConfig(BaseModel):
         learning_rate (float): A factor for scaling model self correction upon mistake. Defaults to 2e-5.
         output_dir (str): Directory into which the resulting tuned model weights are saved to. Defaults to "./training_output".
     """
-    attack_type: Literal[
-        "label_flip",
-        "targeted_label_flip",
-        "data_injection",
-        "data_churn",
-        "backdoor_trigger",
-        "clean_label_backdoor",
-        "lora_weight_poison",
-        "gradient_manipulation",
-        "feature_collision",
-    ]
+    attack_type: AttackMethod
     target_model: str
     poison_rate: float = Field(default=0.1, ge=0.0, le=1.0)
     dataset_name: str
     text_column: str
     target_column: str
     notes: str = ""
-    defense_type: Literal[
-        "none",
-        "label_noise_filter",
-    ] = "none"
+    defense_type: DefenseMethod = "none"
     seed: int = 0
     epochs: int = 3
     samples: int | None = None # None = use full dataset
@@ -99,12 +104,7 @@ class FilterReport(BaseModel):
     """
     total_rows: int
     rows_flagged: int
-    method: Literal[
-        "label_noise_filter",
-        "isolation_forest",
-        "lof",
-        "embedding_cluster"
-    ] # more will be added in the future, this is a placeholder for now
+    method: DefenseMethod
 
     @computed_field
     @property
