@@ -181,7 +181,7 @@ class CreateAttackScreen(ModalScreen[dict | None]):
 
                 yield Label("Defense type *")
                 yield Select(
-                    [(d, d) for d in self.defenses],
+                    [(defense_name.replace("_", " ").title(), defense_name) for defense_name in self.defenses],
                     id="defense_type",
                     prompt="Select defense"
                 )
@@ -211,11 +211,6 @@ class CreateAttackScreen(ModalScreen[dict | None]):
             with Horizontal(id="create-attack-buttons"):
                 yield Button("Cancel", id="cancel", variant="error")
                 yield Button("Create", id="submit", variant="success")
-
-    def on_mount(self) -> None:
-        # Default the defense dropdown to "none" when it is available.
-        if "none" in self.defenses:
-            self.query_one("#defense_type", Select).value = "none"
 
     @on(Slider.Changed, "#poison_rate")
     def _update_poison_label(self, event: Slider.Changed) -> None:

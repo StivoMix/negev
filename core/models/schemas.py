@@ -39,7 +39,7 @@ class AttackConfig(BaseModel):
         poison_rate (float): Percentage of the targetted data that'll be poisoned. 10% by default, min 0% and max 100%
         dataset_name (str): The ID of the dataset in huggingface
         notes (str): Notes written by the attacker to document testing
-        defense_type (Literal): The type of defense to use on a poisoned dataset. Defaults to "none".
+        defense_type (DefenseMethod | None): The type of defense to use on a poisoned dataset. Defaults to None.
         text_column (str): The column in the dataset containing the predictable sequences.
         target_column (str): The column containing the labels to be predicted by a model.
         seed (int): An RNG seed for reproducibility. Defaults to 0.
@@ -57,7 +57,7 @@ class AttackConfig(BaseModel):
     text_column: str
     target_column: str
     notes: str = ""
-    defense_type: DefenseMethod = "none"
+    defense_type: DefenseMethod | None = None
     seed: int = 0
     epochs: int = 3
     samples: int | None = None # None = use full dataset

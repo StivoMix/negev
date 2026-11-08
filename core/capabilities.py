@@ -13,5 +13,5 @@ def get_capabilities() -> dict:
             name: {k: v for k, v in metadata.items() if k != "class"}
             for name, metadata in ATTACK_REGISTRY.items()
         },
-        "defenses": ["none"] + list(DEFENSE_REGISTRY.keys()),
+        "defenses": list(DEFENSE_REGISTRY.keys()),
     }

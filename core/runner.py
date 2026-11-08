@@ -101,7 +101,7 @@ def _build_defense(config: AttackConfig) -> Defense:
     Returns:
         Defense: A defense method to be executed.
     """
-    if config.defense_type == "none":
+    if config.defense_type is None:
         return None
 
     defense_method = DEFENSE_REGISTRY.get(config.defense_type)
@@ -272,7 +272,7 @@ def execute(config: AttackConfig) -> RunResult:
     sanitized_metrics = None
     sanitized_report = None
 
-    if config.defense_type != 'none':
+    if config.defense_type is not None:
         _train_sanitized, sanitized_report = _defense.apply(
             dataset=_train_poisoned,
             model=_model_poisoned,
