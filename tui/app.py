@@ -87,7 +87,7 @@ class RunsTable(Static):
             run["baseline_metrics"]["accuracy"] if run["baseline_metrics"] else "-",
             run["post_attack_metrics"]["accuracy"] if run["post_attack_metrics"] else "-",
             run["post_defense_metrics"]["accuracy"] if run["post_defense_metrics"] else "-",
-            run.get("degradation", "-"),
+            run.get("degradation") if run.get("degradation") is not None else "-",
             run["post_attack_metrics"]["attack_success_rate"] if run["post_attack_metrics"] else "-",
             run["status"],
         ]
