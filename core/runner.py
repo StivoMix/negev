@@ -108,7 +108,7 @@ def _build_defense(config: AttackConfig) -> Defense:
     if defense_method is None:
         raise NotImplementedError(f"Action {config.defense_type} not implemented")
 
-    return defense_method
+    return defense_method(config.target_column, config.text_column, config.device)
 
 def _train_and_measure(
     model: PreTrainedModel,
